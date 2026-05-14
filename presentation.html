@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HireTrust AI 项目汇报</title>
+  <style>
+    :root {
+      --ink: #24312f;
+      --muted: #64706d;
+      --paper: #fff8ed;
+      --sage: #dce8df;
+      --moss: #284238;
+      --rust: #b5533d;
+      --amber: #e6a85d;
+      --line: rgba(36, 49, 47, .16);
+      --shadow: 0 26px 80px rgba(25, 39, 35, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 12%, rgba(230, 168, 93, .36), transparent 26%),
+        radial-gradient(circle at 92% 6%, rgba(40, 66, 56, .24), transparent 25%),
+        linear-gradient(135deg, #fffaf0 0%, #eef6ef 52%, #f7edda 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .deck {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 56px 74px 64px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(28px) scale(.985);
+      transition: opacity .42s ease, transform .42s ease;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 28px;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0) scale(1);
+    }
+
+    .kicker {
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--rust);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+      letter-spacing: -.04em;
+      line-height: 1.06;
+    }
+
+    h1 { font-size: 76px; max-width: 980px; }
+    h2 { font-size: 52px; max-width: 1040px; }
+    p { font-size: 22px; line-height: 1.65; color: var(--muted); margin: 0; }
+
+    .hero-card,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background: rgba(255, 252, 244, .78);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-card { padding: 46px 50px; align-self: center; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .panel { padding: 28px; }
+    .panel h3 { margin: 0 0 14px; font-size: 24px; }
+    .panel p, .panel li { font-size: 19px; line-height: 1.55; }
+    ul { padding-left: 22px; margin: 0; }
+    li { margin: 10px 0; color: var(--muted); }
+
+    .metric {
+      border-radius: 26px;
+      padding: 26px;
+      background: rgba(40, 66, 56, .94);
+      color: #fffaf0;
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric strong { font-size: 54px; letter-spacing: -.05em; }
+    .metric span { color: rgba(255, 250, 240, .76); font-size: 17px; line-height: 1.45; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .step {
+      border-radius: 24px;
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .62);
+      min-height: 160px;
+      position: relative;
+    }
+
+    .step b { display: block; font-size: 20px; margin-bottom: 12px; }
+    .step small { color: var(--muted); font-size: 16px; line-height: 1.45; display: block; }
+    .step::after {
+      content: "→";
+      position: absolute;
+      right: -14px;
+      top: 54px;
+      color: var(--rust);
+      font-size: 24px;
+      font-weight: 900;
+    }
+    .step:last-child::after { content: ""; }
+
+    .mock {
+      border-radius: 30px;
+      background: #fdf9ef;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .mock-head {
+      padding: 16px 20px;
+      background: var(--moss);
+      color: #fffaf0;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mock-body { padding: 24px; }
+    .tag {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(181, 83, 61, .12);
+      color: var(--rust);
+      font-weight: 800;
+      margin: 0 8px 8px 0;
+      font-size: 15px;
+    }
+
+    .bar {
+      height: 14px;
+      background: rgba(36, 49, 47, .1);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 12px 0 20px;
+    }
+    .bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--amber), var(--rust)); }
+
+    .quote {
+      font-size: 30px;
+      line-height: 1.45;
+      font-family: "Songti SC", "STSong", serif;
+      color: var(--ink);
+      border-left: 6px solid var(--rust);
+      padding-left: 24px;
+    }
+
+    .footer {
+      position: fixed;
+      left: 74px;
+      right: 74px;
+      bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: rgba(36, 49, 47, .5);
+      font-size: 14px;
+      z-index: 10;
+    }
+
+    .progress {
+      width: 220px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(36, 49, 47, .14);
+      overflow: hidden;
+    }
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--rust);
+      transition: width .25s ease;
+    }
+
+    .nav {
+      position: fixed;
+      right: 30px;
+      bottom: 24px;
+      z-index: 12;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: rgba(255, 252, 244, .86);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .split-title {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .slide { padding: 30px 22px 72px; overflow-y: auto; }
+      html, body { overflow: auto; }
+      h1 { font-size: 42px; }
+      h2 { font-size: 34px; }
+      .grid-2, .grid-3, .flow, .split-title { grid-template-columns: 1fr; }
+      .step::after { content: ""; }
+      .footer { left: 22px; right: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="HireTrust AI presentation">
+    <section class="slide active">
+      <div class="kicker">HireTrust AI</div>
+      <div class="split-title">
+        <div class="hero-card">
+          <h1>把 AI 招聘黑箱变成可解释、可申诉、可复盘的流程</h1>
+          <p style="margin-top:26px;">候选人透明度与申诉看板，用于校园招聘场景的 AI 辅助招聘 Demo。</p>
+        </div>
+        <div class="metric">
+          <strong>0</strong>
+          <span>AI 自动决策次数。系统只做建议和证据整理，关键决策由 HR 与业务负责人共同确认。</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Core Tension</div>
+        <h2>核心矛盾不是“要不要 AI”，而是“候选人是否信任 AI”</h2>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>公司侧诉求</h3>
+          <ul>
+            <li>延续 AI 带来的流程效率提升。</li>
+            <li>减少重复沟通，提高岗位匹配效率。</li>
+            <li>让业务负责人更快看到候选人证据摘要。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>学生侧担忧</h3>
+          <ul>
+            <li>AI 是否把我推到不适合的岗位？</li>
+            <li>AI 是否会影响 Offer、定岗或定薪？</li>
+            <li>AI 出错后，我有没有解释和申诉机会？</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Product Answer</div>
+        <h2>产品不是替 HR 做决定，而是把决策过程变透明</h2>
+      </div>
+      <div class="flow">
+        <div class="step"><b>提交材料</b><small>候选人主动提交经历、技能、岗位偏好和补充说明。</small></div>
+        <div class="step"><b>辅助建议</b><small>AI 生成岗位范围、参考匹配度和证据充分度。</small></div>
+        <div class="step"><b>解释报告</b><small>候选人看到系统使用和不使用的信息。</small></div>
+        <div class="step"><b>申诉补充</b><small>候选人可纠正岗位意愿、补充项目经历。</small></div>
+        <div class="step"><b>人工复核</b><small>HR 与业务负责人共同确认，系统保留审计记录。</small></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Candidate View</div>
+        <h2>候选人首先看到：系统会用什么，也不会用什么</h2>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>系统会使用的信息</h3>
+          <ul>
+            <li>候选人主动提交的简历/项目经历。</li>
+            <li>候选人填写的目标岗位。</li>
+            <li>AI 测评或试岗记录。</li>
+            <li>候选人补充说明。</li>
+            <li>与岗位胜任力有关的技能和经历证据。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>系统不会使用的信息</h3>
+          <ul>
+            <li>性别、年龄、外貌。</li>
+            <li>家庭背景、地域刻板印象。</li>
+            <li>与岗位能力无关的学校标签。</li>
+            <li>其他与岗位胜任力无关的个人信息。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Explanation Layer</div>
+        <h2>参考匹配度解释材料与岗位的关系，不评价人的价值</h2>
+      </div>
+      <div class="mock">
+        <div class="mock-head"><span>候选人透明看板</span><span>非最终结论</span></div>
+        <div class="mock-body">
+          <span class="tag">AI产品经理</span>
+          <span class="tag">数据分析师</span>
+          <span class="tag">算法产品实习生</span>
+          <p>参考匹配度表示当前材料与岗位要求的匹配程度，不代表能力高低，也不代表最终录用结果。</p>
+          <div class="bar"><span style="width:86%"></span></div>
+          <div class="grid-3">
+            <div class="panel"><h3>数据分析能力</h3><p>Python、SQL、指标分析形成较强材料证据。</p></div>
+            <div class="panel"><h3>产品理解能力</h3><p>需求文档和用户分层支持产品岗位建议。</p></div>
+            <div class="panel"><h3>待人工确认</h3><p>商业落地能力、岗位意愿和团队协作表现。</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Appeal Loop</div>
+        <h2>申诉不是“提交成功”提示，而是进入 HR 复核队列</h2>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>候选人可申诉</h3>
+          <ul>
+            <li>AI 忽略项目经历。</li>
+            <li>AI 错误理解岗位意愿。</li>
+            <li>AI 对技能判断偏低。</li>
+            <li>希望转人工沟通。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>系统会保存</h3>
+          <ul>
+            <li>申诉编号：APPEAL-001。</li>
+            <li>申诉类型和补充说明。</li>
+            <li>提交时间和当前状态。</li>
+            <li>HR 复核覆盖了几条申诉。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">HR / Business View</div>
+        <h2>HR 工作台强调人工终审，而不是包装 AI 决策</h2>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>终审动作</h3>
+          <ul>
+            <li>维持 AI 推荐，但进入人工面谈。</li>
+            <li>调整推荐岗位。</li>
+            <li>要求候选人补充材料。</li>
+            <li>转业务负责人复核。</li>
+            <li>暂不采纳 AI 建议。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <p class="quote">AI 仅提供辅助建议和证据整理，不自动决定 Offer、定岗或定薪。最终决策必须由 HR 与业务负责人共同确认。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Audit & Metrics</div>
+        <h2>审计留痕让系统可解释、可申诉、可复盘、可追责</h2>
+      </div>
+      <div class="grid-3">
+        <div class="metric"><strong>0</strong><span>AI 自动决策次数</span></div>
+        <div class="metric"><strong>已启用</strong><span>敏感因素排除机制</span></div>
+        <div class="metric"><strong>未启用</strong><span>薪资自动决策</span></div>
+      </div>
+      <div class="panel" style="margin-top:24px;">
+        <h3>事件时间线</h3>
+        <p>候选人提交基本信息 → AI 生成岗位匹配建议 → 候选人查看解释性报告 → 每条申诉独立留痕 → HR/业务负责人人工复核。</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div>
+        <div class="kicker">Delivery</div>
+        <h2>交付方式：在线 Demo + GitHub 仓库 + 设计文档</h2>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>已完成</h3>
+          <ul>
+            <li>Streamlit 可运行 Demo。</li>
+            <li>GitHub 仓库：hiretrust-ai-recruitment-demo。</li>
+            <li>1000 字以内 DESIGN.md。</li>
+            <li>pytest 测试覆盖申诉、复核和风险文案。</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>汇报收束</h3>
+          <p>这不是一个“AI 替代招聘”的系统，而是一个“让 AI 受到约束”的透明化产品：候选人知道 AI 做了什么，HR 知道如何复核，公司知道如何承担责任。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">
+    <span>HireTrust AI / Candidate Transparency Demo</span>
+    <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+    <span id="count">1 / 9</span>
+  </div>
+  <div class="nav" aria-label="navigation">
+    <button id="prev">←</button>
+    <button id="next">→</button>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const progress = document.querySelector('#progress');
+    const count = document.querySelector('#count');
+    let index = Number(location.hash.replace('#', '')) || 1;
+    index = Math.min(Math.max(index, 1), slides.length) - 1;
+
+    function show(nextIndex) {
+      index = Math.min(Math.max(nextIndex, 0), slides.length - 1);
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      count.textContent = `${index + 1} / ${slides.length}`;
+      history.replaceState(null, '', `#${index + 1}`);
+    }
+
+    document.querySelector('#prev').addEventListener('click', () => show(index - 1));
+    document.querySelector('#next').addEventListener('click', () => show(index + 1));
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowRight', ' ', 'PageDown'].includes(event.key)) show(index + 1);
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) show(index - 1);
+      if (event.key === 'Home') show(0);
+      if (event.key === 'End') show(slides.length - 1);
+    });
+    show(index);
+  </script>
+</body>
+</html>
