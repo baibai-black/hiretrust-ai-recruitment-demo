@@ -82,6 +82,8 @@ h1, h2, h3 {
 </style>
 """
 
+APP_VERSION = "2026-05-15 empty-input-fix"
+
 
 def init_state() -> None:
     if "payload" not in st.session_state:
@@ -114,6 +116,9 @@ def render_header() -> None:
             这个 Demo 回应“AI 提升招聘效率”与“学生担心黑箱、不公和错配”的冲突：
             AI 负责记录、解释和推荐范围，关键决策由 HR 与业务负责人共同确认。
           </p>
+          <p style="font-size: 0.88rem; opacity: .68; margin-top: 12px;">
+            当前版本：2026-05-15 empty-input-fix
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -122,6 +127,7 @@ def render_header() -> None:
 
 def render_input_panel() -> str:
     with st.sidebar:
+        st.caption(f"当前版本：{APP_VERSION}")
         view = st.radio(
             "选择演示视角",
             ["候选人视角", "HR/业务负责人视角", "审计与效果评估视角"],
@@ -245,6 +251,11 @@ def render_appeal(result: dict) -> None:
 
     st.subheader("参考匹配度说明")
     st.markdown(f"<div class='redline'>{result['match_notice']}</div>", unsafe_allow_html=True)
+    st.caption(
+        "Demo 规则：技术岗材料通常更结构化，基础参考值设为 72；职能岗更依赖沟通和情境判断，"
+        "基础参考值设为 64。每识别 1 类有效材料证据增加 5；候选人填写的第 2、3 个岗位因优先级更低，"
+        "分别递减 4、8。该规则只用于演示可解释流程，不代表真实招聘模型权重。"
+    )
 
     st.subheader("薪资沟通参考维度")
     st.info(result["salary_reference_notice"])
@@ -291,12 +302,6 @@ def render_brand(result: dict) -> None:
 
     st.subheader("责任边界")
     st.markdown(f"<div class='redline'>{result['responsibility_boundary']}</div>", unsafe_allow_html=True)
-
-    st.subheader("为什么方案A优先")
-    st.write(
-        "方案A直接解决学生对AI黑箱的恐惧：候选人能看到推荐范围、依据、排除因素和申诉入口。"
-        "方案B保留为后台证据能力，帮助HR解释和复盘，但不把系统做成只服务HR效率的内部工具。"
-    )
 
 
 def render_review(result: dict) -> None:
