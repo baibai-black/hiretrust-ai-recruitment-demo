@@ -192,6 +192,9 @@ def _recognized_signals(text: str, role_type: str) -> list[str]:
 
 def _recommend_roles(target_roles: list[str], signals: list[str], role_type: str) -> list[RoleResult]:
     evidence_count = sum(1 for signal in signals if not signal.startswith("证据不足"))
+    # Demo weights: technical-role materials are usually more structured, while
+    # functional roles need more interview context. Later target roles are shown
+    # as lower-priority options, not as lower candidate ability.
     base = 72 if "技术" in role_type else 64
     roles: list[RoleResult] = []
     for index, role in enumerate(target_roles[:3]):
