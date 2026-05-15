@@ -208,7 +208,8 @@ def render_candidate_dashboard(result: dict) -> None:
         with st.container(border=True):
             c1, c2, c3 = st.columns([2, 1, 3])
             c1.markdown(f"### {role['role']}")
-            c2.metric("参考匹配度", role["reference_match"])
+            match_value = role["reference_match"] if role["reference_match"] is not None else "待补充"
+            c2.metric("参考匹配度", match_value)
             c3.write(f"{role['evidence_sufficiency']}。{role['rationale']}")
             st.caption(role["process_status"])
 
