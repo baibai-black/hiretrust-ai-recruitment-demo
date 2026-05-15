@@ -83,6 +83,25 @@ def test_candidate_concern_triggers_human_review() -> None:
     assert "不会被AI直接定岗或定薪" in result["candidate_explanation"]
 
 
+def test_no_content_inputs_do_not_generate_numeric_match() -> None:
+    result = analyze_candidate(
+        {
+            "role_type": "技术岗",
+            "target_roles": "AI产品经理, 数据分析师, 算法产品实习生",
+            "resume": "无",
+            "assessment": "无",
+            "concerns": "无",
+        }
+    )
+
+    assert result["human_review_required"] is True
+    assert "当前材料不足，暂不生成数字化参考匹配度" in result["ai_summary"]
+    assert any("材料证据不足" in reason for reason in result["review_reasons"])
+    assert all(role["reference_match"] is None for role in result["recommended_roles"])
+    assert all("证据不足" in role["evidence_sufficiency"] for role in result["recommended_roles"])
+    assert all(process["reference_match"] == "待补充材料" for process in result["parallel_processes"])
+
+
 def test_trial_resource_shortage_uses_short_answer_and_one_to_one() -> None:
     result = analyze_candidate(
         {
