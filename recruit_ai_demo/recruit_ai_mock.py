@@ -40,7 +40,7 @@ DEFAULT_ROLES = ["AI产品经理", "数据分析师", "业务运营管培生"]
 @dataclass(frozen=True)
 class RoleResult:
     role: str
-    reference_match: int
+    reference_match: int | None
     evidence_sufficiency: str
     rationale: str
     process_status: str
@@ -63,9 +63,9 @@ def analyze_candidate(payload: dict[str, Any]) -> dict[str, Any]:
     candidate_name = str(payload.get("candidate_name") or "候选人").strip()
     role_type = str(payload.get("role_type") or "技术岗").strip()
     target_roles = _parse_roles(payload.get("target_roles"))
-    resume = str(payload.get("resume") or "")
-    assessment = str(payload.get("assessment") or "")
-    concerns = str(payload.get("concerns") or "")
+    resume = _clean_material(payload.get("resume"))
+    assessment = _clean_material(payload.get("assessment"))
+    concerns = _clean_material(payload.get("concerns"))
     resource_mode = str(payload.get("resource_mode") or "")
 
     full_text = " ".join([resume, assessment, concerns]).lower()
@@ -135,8 +135,37 @@ def _parse_roles(raw_roles: Any) -> list[str]:
     else:
         normalized = str(raw_roles or "").replace("，", ",").replace("、", ",").replace("\n", ",")
         roles = [role.strip() for role in normalized.split(",")]
-    roles = [role for role in roles if role]
+    roles = [role for role in roles if role and not _is_no_content_text(role)]
     return (roles or DEFAULT_ROLES)[:3]
+
+
+def _clean_material(raw_text: Any) -> str:
+    text = str(raw_text or "").strip()
+    return "" if _is_no_content_text(text) else text
+
+
+def _is_no_content_text(text: str) -> bool:
+    normalized = text.strip().lower().replace("。", "").replace(".", "")
+    no_content_values = {
+        "",
+        "无",
+        "暂无",
+        "没有",
+        "无内容",
+        "无相关经历",
+        "没有相关经历",
+        "无测评",
+        "暂无测评",
+        "无担忧",
+        "没有担忧",
+        "none",
+        "no",
+        "n/a",
+        "na",
+        "/",
+        "-",
+    }
+    return normalized in no_content_values
 
 
 def _find_sensitive_factors(text: str) -> list[str]:
@@ -164,11 +193,9 @@ def _recognized_signals(text: str, role_type: str) -> list[str]:
 def _recommend_roles(target_roles: list[str], signals: list[str], role_type: str) -> list[RoleResult]:
     evidence_count = sum(1 for signal in signals if not signal.startswith("证据不足"))
     base = 72 if "技术" in role_type else 64
-    if evidence_count == 0:
-        base = 48
     roles: list[RoleResult] = []
     for index, role in enumerate(target_roles[:3]):
-        reference_match = max(45, min(92, base + evidence_count * 5 - index * 4))
+        reference_match = None if evidence_count == 0 else max(45, min(92, base + evidence_count * 5 - index * 4))
         evidence_sufficiency = _evidence_sufficiency_label(reference_match)
         rationale = "与已识别材料证据较匹配" if "证据不足" not in evidence_sufficiency else "材料证据不足，必须人工确认"
         if "职能" in role_type:
@@ -178,7 +205,9 @@ def _recommend_roles(target_roles: list[str], signals: list[str], role_type: str
     return roles
 
 
-def _evidence_sufficiency_label(reference_match: int) -> str:
+def _evidence_sufficiency_label(reference_match: int | None) -> str:
+    if reference_match is None:
+        return "证据不足，无法生成参考匹配度，必须人工确认"
     if reference_match >= 82:
         return "证据充分度：较充分"
     if reference_match >= 65:
@@ -263,10 +292,12 @@ def _summary(
     recommendations: list[RoleResult],
 ) -> str:
     top_role = recommendations[0].role if recommendations else "待确认岗位"
+    evidence_count = sum(1 for signal in signals if not signal.startswith("证据不足"))
+    evidence_text = f"已识别{evidence_count}类有效材料证据" if evidence_count else "当前材料不足，暂不生成数字化参考匹配度"
     return (
         f"{candidate_name}当前进入{role_type}透明评估流程。"
         f"AI仅基于候选人材料和测评记录生成初步建议，优先推荐范围为{top_role}等相关岗位。"
-        f"已识别{len(signals)}类证据，所有关键结论需HR与业务负责人共同复核。"
+        f"{evidence_text}，所有关键结论需HR与业务负责人共同复核。"
     )
 
 
@@ -280,12 +311,13 @@ def _parallel_processes(target_roles: list[str], recommendations: list[RoleResul
     processes: list[dict[str, str]] = []
     match_by_role = {item.role: item.reference_match for item in recommendations}
     for role in target_roles[:3]:
+        reference_match = match_by_role.get(role)
         processes.append(
             {
                 "role": role,
                 "status": "候选人选择进入",
                 "hr_visibility": "HR后台可见该流程状态，避免重复沟通和岗位冲突。",
-                "reference_match": str(match_by_role.get(role, "待评估")),
+                "reference_match": str(reference_match) if reference_match is not None else "待补充材料",
             }
         )
     return processes
